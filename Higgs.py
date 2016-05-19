@@ -8,6 +8,8 @@ import matplotlib.pyplot as plt
 from scipy import stats
 from numpy import *
 from scipy import optimize
+from scipy.stats import norm
+from scipy.optimize import curve_fit
 
 # If random seed set to None, random seed set at rantime so result is non-reproducible
 #seedval = None
@@ -40,6 +42,7 @@ binedges=np.linspace(min,max,(max-min)/binwidth+1)
 # Note this is a wonky model that's not the same as the fit model later
 # It's more like real data that way!
 z=[[],[]]
+s=[]
 for i in range(100):
     np.random.seed(i)
     signal = np.random.normal(mh,res,nsig)
@@ -101,6 +104,7 @@ for i in range(100):
     p1, success = leastsq(errfunc,p0[:],args=(xdata,ydata))
     z[0].append(p1[2])
     z[1].append(p1[0])
+    s.append(success)
 """print
 print "... done fitting."
 print
@@ -138,45 +142,62 @@ n, bins, patches = ax2.hist(z[1],100)
 ax2.set_xlabel('Mass')
 ax2.set_ylabel('Frequency')
 
-fig3=plt.figure()  #scatter
-ax3 = fig3.add_subplot(1, 1, 1)
-xedges, yedges = np.linspace(0, 180, 1000), np.linspace(-50, 1500, 1000)
-hist, xedges, yedges = np.histogram2d(z[1], z[0], (xedges, yedges))
-xidx = np.clip(np.digitize(z[1], xedges), 0, hist.shape[0]-1)
-yidx = np.clip(np.digitize(z[0], yedges), 0, hist.shape[1]-1)
-c = hist[xidx, yidx]
-plt.scatter(z[1], z[0],s=300,alpha=0.15, c=c)
+def scatter():
+    fig3=plt.figure()  #scatter
+    ax3 = fig3.add_subplot(1, 1, 1)
+    xedges, yedges = np.linspace(0, 180, 1000), np.linspace(-50, 1500, 1000)
+    hist, xedges, yedges = np.histogram2d(z[1], z[0], (xedges, yedges))
+    xidx = np.clip(np.digitize(z[1], xedges), 0, hist.shape[0]-1)
+    yidx = np.clip(np.digitize(z[0], yedges), 0, hist.shape[1]-1)
+    c = hist[xidx, yidx]
+    plt.scatter(z[1],s,s=300,alpha=0.15, c=c)
 
-fig4, ax4 = plt.subplots(figsize=(18, 18))
-"""data=[z[1],z[0]]
-xedges, yedges = np.linspace(0, 180, 1000), np.linspace(-50, 1500, 1000)
-i=ax4.imshow(data, extent=[0,140,-20,1200],aspect="auto",interpolation="none")
-cbar=fig4.colorbar(i)"""
-plt.hist2d(z[1],z[0],(50, 50), cmap=plt.cm.jet)
-plt.colorbar()
-
-gaussian = lambda x: 3*exp(-(30-x)**2/20.)
-
-mass=[]
-for i in z[1]:
-    if i<127:
-        mass.append(z[1])
+def success_hist():
+    fig4, ax4 = plt.subplots(figsize=(18, 18))
+    plt.hist2d(z[1],s,(50, 50), cmap=plt.cm.jet)
+    plt.colorbar()
 
 
-data = gaussian(mass)
+def mass_plot():
+    mass=[]
+    for i in z[1]:
+        if i<127.0:
+            mass.append(i)
+    data=mass        
+    fig5, ax5 = plt.subplots(figsize=(18, 18))        
+    mu, sigma = norm.fit(data)        
+    plt.hist(data, bins=30, normed=True, alpha=0.6, color='r')
+    xmin,xmax=plt.xlim()
+    x = np.linspace(xmin, xmax, 100)
+    p = norm.pdf(x, mu, sigma)
+    plt.plot(x, p, 'k', linewidth=1)
+    Mass = "Fit results:  mu = %.2f,  std = %.2f" % (mu, sigma) + "mass"
+    print Mass
+    plt.title(Mass)
 
-plot(mass)
+def num_plot():
+        number=[]
+        for i in z[0]:
+            if i>500.0:
+             number.append(i)
+        data=number        
+        fig6, ax6 = plt.subplots(figsize=(18, 18))        
+        mu, sigma = norm.fit(data)        
+        plt.hist(data, bins=30, normed=True, alpha=0.6, color='g')
+        xmin,xmax=plt.xlim()
+        x = np.linspace(xmin, xmax, 100)
+        p = norm.pdf(x, mu, sigma)
+        plt.plot(x, p, 'k', linewidth=1)
+        s = "Fit results:  mu = %.2f,  std = %.2f" % (mu, sigma) + "number"
+        print s
+        plt.xlabel("number of Higgs")
+        plt.ylabel("number of Higgs")
+        plt.title(s)
+        plt.show()
 
-X = arange(mass.size)
-x = sum(X*mass)/sum(mass)
-width = sqrt(abs(sum((X-x)**2*data)/sum(data)))
-
-max = data.max()
-
-fit = lambda t : max*exp(-(t-x)**2/(2*width**2))
-
-plot(fit(X))
-
-show()
+scatter()
+num_plot()
+mass_plot()
+success_hist()
 
 plt.show()
