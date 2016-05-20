@@ -128,33 +128,57 @@ plt.plot(xplot, fbkg(p1[3:],xplot),"r.",label="Fit (Background)")
 plt.legend(numpoints=1,frameon=False)
 plt.clf()
 
+def raw_num_hist():
+    fig1 = plt.figure()
+    ax1 = fig1.add_subplot(1, 1, 1)
+    n, bins, patches = ax1.hist(z[0],100)
+    ax1.set_xlabel("numbers")
+    ax1.set_ylabel('Frequency')
 
-fig1 = plt.figure()
-ax1 = fig1.add_subplot(1, 1, 1)
-n, bins, patches = ax1.hist(z[0],100)
-ax1.set_xlabel("numbers")
-ax1.set_ylabel('Frequency')
+def raw_mass_hist():
+    fig2 = plt.figure()
+    ax2 = fig2.add_subplot(1, 1, 1)
+    n, bins, patches = ax2.hist(z[1],100)
+    ax2.set_xlabel('Mass')
+    ax2.set_ylabel('Frequency')
 
-
-fig2 = plt.figure()
-ax2 = fig2.add_subplot(1, 1, 1)
-n, bins, patches = ax2.hist(z[1],100)
-ax2.set_xlabel('Mass')
-ax2.set_ylabel('Frequency')
-
-def scatter():
-    fig3=plt.figure()  #scatter
+def scatter_mass():
+    fig3=plt.figure()  #scatter of success vs mass
     ax3 = fig3.add_subplot(1, 1, 1)
     xedges, yedges = np.linspace(0, 180, 1000), np.linspace(-50, 1500, 1000)
     hist, xedges, yedges = np.histogram2d(z[1], z[0], (xedges, yedges))
     xidx = np.clip(np.digitize(z[1], xedges), 0, hist.shape[0]-1)
     yidx = np.clip(np.digitize(z[0], yedges), 0, hist.shape[1]-1)
     c = hist[xidx, yidx]
+    plt.xlabel("mass")
+    plt.ylabel("success")
     plt.scatter(z[1],s,s=300,alpha=0.15, c=c)
+    
+def scatter_number():
+    fig3=plt.figure()  #scatter of success vs mass
+    ax3 = fig3.add_subplot(1, 1, 1)
+    xedges, yedges = np.linspace(0, 180, 1000), np.linspace(-50, 1500, 1000)
+    hist, xedges, yedges = np.histogram2d(z[1], z[0], (xedges, yedges))
+    xidx = np.clip(np.digitize(z[1], xedges), 0, hist.shape[0]-1)
+    yidx = np.clip(np.digitize(z[0], yedges), 0, hist.shape[1]-1)
+    c = hist[xidx, yidx]
+    plt.xlabel("number")
+    plt.ylabel("success")
+    plt.scatter(z[1],s,s=300,alpha=0.15, c=c)
+    
 
-def success_hist():
+def success_mass_hist():   #2d success vs mass
     fig4, ax4 = plt.subplots(figsize=(18, 18))
     plt.hist2d(z[1],s,(50, 50), cmap=plt.cm.jet)
+    plt.xlabel("mass")
+    plt.ylabel("success")
+    plt.colorbar()
+    
+def success_num_hist():   #2d success vs mass
+    fig4, ax4 = plt.subplots(figsize=(18, 18))
+    plt.hist2d(z[0],s,(50, 50), cmap=plt.cm.jet)
+    plt.xlabel("num")
+    plt.ylabel("success")
     plt.colorbar()
 
 
@@ -166,13 +190,15 @@ def mass_plot():
     data=mass        
     fig5, ax5 = plt.subplots(figsize=(18, 18))        
     mu, sigma = norm.fit(data)        
-    plt.hist(data, bins=30, normed=True, alpha=0.6, color='r')
+    plt.hist(data, bins=60, normed=True, alpha=0.6, color='r')
     xmin,xmax=plt.xlim()
     x = np.linspace(xmin, xmax, 100)
     p = norm.pdf(x, mu, sigma)
     plt.plot(x, p, 'k', linewidth=1)
     Mass = "Fit results:  mu = %.2f,  std = %.2f" % (mu, sigma) + "mass"
     print Mass
+    plt.xlabel("Mass")
+    plt.ylabel("frequency")
     plt.title(Mass)
 
 def num_plot():
@@ -183,21 +209,50 @@ def num_plot():
         data=number        
         fig6, ax6 = plt.subplots(figsize=(18, 18))        
         mu, sigma = norm.fit(data)        
-        plt.hist(data, bins=30, normed=True, alpha=0.6, color='g')
+        plt.hist(data, bins=60, normed=True, alpha=0.6, color='g')
         xmin,xmax=plt.xlim()
         x = np.linspace(xmin, xmax, 100)
         p = norm.pdf(x, mu, sigma)
         plt.plot(x, p, 'k', linewidth=1)
         s = "Fit results:  mu = %.2f,  std = %.2f" % (mu, sigma) + "number"
         print s
+        print sigma
         plt.xlabel("number of Higgs")
-        plt.ylabel("number of Higgs")
+        plt.ylabel("frequency")
         plt.title(s)
         plt.show()
+        num_plot.sigma=sigma
+        num_plot.number=number
 
-scatter()
-num_plot()
-mass_plot()
-success_hist()
+        
+
+def t():   #calculates the pull of the data set
+    num_plot()
+    plt.clf()
+    pull=[]
+    for i in num_plot.number:
+        p=(1000-i)/num_plot.sigma
+        pull.append(p) 
+    t.pull=pull
+
+
+def pull_plot():
+    t()
+    data=t.pull        
+    fig5, ax5 = plt.subplots(figsize=(18, 18))        
+    mu, sigma = norm.fit(data)        
+    plt.hist(data, bins=200, normed=True, alpha=0.6, color='r')
+    xmin,xmax=plt.xlim()
+    x = np.linspace(xmin, xmax, 100)
+    p = norm.pdf(x, mu, sigma)
+    plt.plot(x, p, 'k', linewidth=2)
+    Pull = "Fit results:  mu = %.2f,  std = %.2f" % (mu, sigma) + "pull"
+    print Pull
+    plt.xlabel("Pull")
+    plt.ylabel("frequency")
+    plt.title(Pull)
+
+
+pull_plot()
 
 plt.show()
